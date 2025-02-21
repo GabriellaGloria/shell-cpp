@@ -1,8 +1,9 @@
 #include <iostream>
 #include <string>
+#include <sstream>
+#include <filesystem>
 
-enum commands
-{
+enum validCommands {
   type,
   echo,
   cd,
@@ -10,16 +11,32 @@ enum commands
   invalid
 };
 
-commands string_to_command(std::string str)
-{
-  if(str.find("type")!= std::string::npos) return type;
-  if(str.find("echo") != std::string::npos) return echo;
-  if(str.find("cd") != std::string::npos) return cd;
-  if(str.find("exit") != std::string::npos) return exit_0;
-  
+validCommands string_to_command(std::string command){
+  command = command.substr(0,command.find(" "));
+
+  if(command == "echo") return validCommands::echo;
+  if(command == "cd") return validCommands::cd;
+  if(command == "exit") return validCommands::exit_0;
+  if(command == "type") return validCommands::type;
+
   return invalid;
 }
 
+std::string get_path(std::string command){
+    std::string path_env = std::getenv("PATH");
+    std::stringstream stream(path_env);
+    std::string path;
+
+    while(!stream.eof()){
+        std::getline(stream, path, ':');
+        std::string abs_path = path + '/' + command;
+        if(std::filesystem::exists(abs_path)){
+            return abs_path;
+        }
+    }
+
+    return "";  
+}
 
 std::string trim(std::string str, int start, int ends){
     if ((ends - start + 1) <= 0 || (ends - start + 1) > str.length()) {
@@ -38,15 +55,21 @@ int main() {
     std::cout << "$ ";
     std::string input;
     std::getline(std::cin, input);
-    commands current = string_to_command(input);
+    validCommands current = string_to_command(input);
     if(current == echo){
       std::cout << trim(input, 5, input.length() - 1) << std::endl;
     } else if(current == type){
-      commands val = string_to_command(trim(input, 5, input.length() - 1));
+      validCommands val = string_to_command(trim(input, 5, input.length() - 1));
       if(val != invalid){
         std::cout << trim(input, 5, input.length() - 1) << " is a shell builtin" << std::endl;
       } else {
-        std::cout << trim(input, 5, input.length() - 1) << ": not found" << std::endl;
+        input = trim(input, 5, input.length() - 1);
+        std::string path = get_path(input);
+        if(path.empty()){
+          std::cout << input << ": not found" << std::endl;
+        } else {
+          std::cout << input << " is "<< path << std::endl;
+        }
       }
     } else if(current == exit_0){
       return 0;
