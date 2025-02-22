@@ -97,7 +97,7 @@ void print_arguments(int counter, std::string input)
 	}
 	else
 	{
-		std::cout << "Arg #" << counter << " " << input << std::endl;
+		std::cout << "Arg #" << counter << ": " << input << std::endl;
 	}
 }
 
@@ -110,11 +110,20 @@ void do_command(std::string input)
 {
 	system(&input[0]);
 	int counter = 0;
+	std::cout << input << std::endl;
 	while (!input.empty())
 	{
-		std::string arg = input.substr(0, input.find(" "));
-		input = input.substr(arg.length());
-		print_arguments(counter, input);
+		size_t pos = input.find(" ");
+		std::string arg;
+		if (pos == std::string::npos) {
+			arg = input;
+			input.clear();
+		} else {
+			arg = input.substr(0, pos);
+			input = input.substr(pos + 1);
+		}
+		print_arguments(counter, arg);
+		counter += 1;
 	}
 	print_signature();
 }
@@ -135,22 +144,22 @@ int main()
 
 		std::string command = input.substr(0, input.find(" "));
 		std::string command_path = get_path(command);
-		
-		if (!command_path.empty())
-		{
-			do_command(input);
-		}
-		else if (current == echo)
-		{
-			to_echo(input);
-		}
-		else if (current == type)
+
+		if (current == type)
 		{
 			to_type(input);
 		}
 		else if (current == exit_0)
 		{
 			return 0;
+		}
+		else if (current == echo)
+		{
+			to_echo(input);
+		}
+		else if (!command_path.empty())
+		{
+			do_command(input);
 		}
 		else
 		{
