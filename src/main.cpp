@@ -3,7 +3,7 @@
 #include <sstream>
 #include <filesystem>
 #include <stdlib.h>
-#include <unistd.h> 
+#include <unistd.h>
 #include <termios.h>
 #include <fstream>
 
@@ -71,24 +71,34 @@ void to_echo(std::string input)
 	char delimiter = '\'';
 	int delimiter_count = 0;
 
-	for(char i : input){
-		if(i == delimiter) delimiter_count += 1;
+	for (char i : input)
+	{
+		if (i == delimiter)
+			delimiter_count += 1;
 	}
 
-	if(delimiter_count < 2) std::cout << trim(input, 5, input.length() - 1) << std::endl;
-	else {
+	if (delimiter_count < 2)
+		std::cout << trim(input, 5, input.length() - 1) << std::endl;
+	else
+	{
 
 		int start = -1, end = -1;
 		input = trim(input, 5, input.length() - 1);
-		for(int i=0; i<input.size(); i++){
-			if(input[i] == delimiter && start == -1){
+		for (int i = 0; i < input.size(); i++)
+		{
+			if (input[i] == delimiter && start == -1)
+			{
 				start = i;
-			} else if(input[i] == delimiter && end == -1){
+			}
+			else if (input[i] == delimiter && end == -1)
+			{
 				end = i;
 			}
-			if(start != -1 && end != -1){
+			if (start != -1 && end != -1)
+			{
 				std::string cur = "";
-				for(int j=start+1; j<end; j++){
+				for (int j = start + 1; j < end; j++)
+				{
 					cur += input[j];
 				}
 				std::cout << cur << " ";
@@ -97,7 +107,6 @@ void to_echo(std::string input)
 		}
 		std::cout << std::endl;
 	}
-
 }
 
 void to_type(std::string input)
@@ -150,67 +159,131 @@ int do_command(std::string input)
 	return ret;
 }
 
-void do_cd(std::string input){
+void do_cd(std::string input)
+{
 	input = input.substr(input.find(" ") + 1);
 	int res = chdir(input == "~" ? std::getenv("HOME") : input.c_str());
-	if(res < 0){
+	if (res < 0)
+	{
 		std::cout << "cd: " << input.c_str() << ": No such file or directory" << std::endl;
 	}
 }
 
-void enableRawMode() {
-  termios term;
-  tcgetattr(STDIN_FILENO, &term);
-  term.c_lflag &= ~(ICANON | ECHO);
-  tcsetattr(STDIN_FILENO, TCSANOW, &term);
+void enableRawMode()
+{
+	termios term;
+	tcgetattr(STDIN_FILENO, &term);
+	term.c_lflag &= ~(ICANON | ECHO);
+	tcsetattr(STDIN_FILENO, TCSANOW, &term);
 }
 
-void disableRawMode() {
-  termios term;
-  tcgetattr(STDIN_FILENO, &term);
-  term.c_lflag |= (ICANON | ECHO);
-  tcsetattr(STDIN_FILENO, TCSANOW, &term);
+void disableRawMode()
+{
+	termios term;
+	tcgetattr(STDIN_FILENO, &term);
+	term.c_lflag |= (ICANON | ECHO);
+	tcsetattr(STDIN_FILENO, TCSANOW, &term);
 }
 
-bool handleTabPress(std::string& input) {
-  if(input == "ech") {
-    input = "echo ";
-    std::cout << "o ";
-	return true;
-  }
-  else if(input == "exi") {
-    input = "exit ";
-    std::cout << "t ";
-	return true;
-  }
-  return false;
+bool get_external_command(std::string &input)
+{
+	std::string path = std::getenv("PATH");
+	std::istringstream stream(path);
+
+	while (!stream.eof())
+	{
+		std::getline(stream, path, ':');
+		std::string abs_path = path;
+		for (const auto &dirEntry : std::filesystem::directory_iterator(abs_path))
+		{
+			if (dirEntry.path().filename().string().find(input) != std::string::npos)
+			{
+
+				// std::cout << "exist" << std::endl;
+				std::string ans = dirEntry.path().filename().string();
+				std::string ret = "";
+				int tmp = 0;
+				while(tmp < input.length() && ans[tmp] == input[tmp]){
+					tmp++;
+				}
+				for(int i=tmp; i<ans.length(); i++){
+					ret += ans[i];
+				}
+				std::cout << ret << " " << std::endl;
+				return true;
+			}
+		}
+	}
+
+	// for (const auto &dirEntry : std::filesystem::directory_iterator("."))
+	// {
+	// 	if (dirEntry.path().filename().string().find(input) != std::string::npos)
+	// 	{
+	// 		std::cout << "exist" << std::endl;
+	// 		std::cout << dirEntry.path().filename().string() << std::endl;
+	// 		return true;
+	// 	}
+	// }
+	return false;
 }
 
-void readInputWithTabSupport(std::string& input) {
-  enableRawMode();
-  char c;
-  while (true) {
-    c = getchar();
-    if (c == '\n') {
-      std::cout << std::endl;
-      break;
-    } else if (c == '\t') {
-      if(!handleTabPress(input)){
-		std::cout << "\a";
-	  } 
-    } else if (c == 127) {
-      if (!input.empty()) {
-        input.pop_back();
-        std::cout << "\b \b";
-      }
-    } else {
-      input += c;
-      std::cout << c;
-    }
-  }
-  disableRawMode();
+bool handleTabPress(std::string &input)
+{
+	if (input == "ech")
+	{
+		input = "echo ";
+		std::cout << "o ";
+		return true;
+	}
+	else if (input == "exi")
+	{
+		input = "exit ";
+		std::cout << "t ";
+		return true;
+	}
+	else if (get_external_command(input))
+	{
+		return true;
+	}
+
+	return false;
 }
 
+void readInputWithTabSupport(std::string &input)
+{
+	enableRawMode();
+	char c;
+	while (true)
+	{
+		c = getchar();
+		if (c == '\n')
+		{
+			std::cout << std::endl;
+			break;
+		}
+		else if (c == '\t')
+		{
+			if (!handleTabPress(input))
+			{
+				std::cout << "\a";
+			}
+		}
+		else if (c == 127)
+		{
+			if (!input.empty())
+			{
+				input.pop_back();
+				std::cout << "\b \b";
+			}
+		}
+		else
+		{
+			input += c;
+			std::cout << c;
+		}
+	}
+	disableRawMode();
+}
 
 int main()
 {
@@ -223,7 +296,7 @@ int main()
 		// REPL
 		std::cout << "$ ";
 		std::string input;
-    	readInputWithTabSupport(input);
+		readInputWithTabSupport(input);
 		validCommands current = string_to_command(input);
 
 		std::string command = input.substr(0, input.find(" "));
@@ -231,19 +304,23 @@ int main()
 
 		// std::cout << "echo " << std::endl;
 
-		if(command_path.empty() && (input[0] == '\'' || input[0] == '\"')){
+		if (command_path.empty() && (input[0] == '\'' || input[0] == '\"'))
+		{
 			// try remove the quote to get renamed executable
 			char delimiter = input[0];
 			command = "";
 			bool valid = false;
-			for(int i=1; i<input.length(); i++){
-				if(input[i] == delimiter){
+			for (int i = 1; i < input.length(); i++)
+			{
+				if (input[i] == delimiter)
+				{
 					valid = true;
 					break;
 				}
 				command += input[i];
 			}
-			if(valid){
+			if (valid)
+			{
 				command_path = get_path(command);
 			}
 		}
@@ -255,11 +332,11 @@ int main()
 		{
 			return 0;
 		}
-		else if(current == pwd)
+		else if (current == pwd)
 		{
 			do_command("pwd");
 		}
-		else if(current == cd)
+		else if (current == cd)
 		{
 			// do_command(input);
 			do_cd(input);
@@ -267,8 +344,8 @@ int main()
 		else if (!command_path.empty() || current == cat_quote)
 		{
 			do_command(input);
-		} 
-		else 
+		}
+		else
 		{
 			not_found(input);
 		}
