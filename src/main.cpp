@@ -224,7 +224,7 @@ int main()
 		std::string command = input.substr(0, input.find(" "));
 		std::string command_path = get_path(command);
 
-		std::cout << "echo " << std::endl;
+		// std::cout << "echo " << std::endl;
 
 		if(command_path.empty() && (input[0] == '\'' || input[0] == '\"')){
 			// try remove the quote to get renamed executable
