@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <termios.h>
 #include <fstream>
+#include <unordered_set>
+#include <set>
 
 enum validCommands
 {
@@ -205,10 +207,12 @@ bool get_external_command(std::string &input)
 				std::string ret = "";
 				int tmp = 0;
 
-				while(tmp < input.length() && ans[tmp] == input[tmp]){
+				while (tmp < input.length() && ans[tmp] == input[tmp])
+				{
 					tmp++;
 				}
-				for(int i=tmp; i<ans.length(); i++){
+				for (int i = tmp; i < ans.length(); i++)
+				{
 					ret += ans[i];
 				}
 
@@ -220,6 +224,53 @@ bool get_external_command(std::string &input)
 		}
 	}
 	return false;
+}
+
+std::string autocomplete(std::string& input){
+	std::string path = std::getenv("PATH");
+	std::istringstream stream(path);
+	std::set<std::string> res;
+
+	while (!stream.eof())
+	{
+		std::getline(stream, path, ':');
+		std::string abs_path = path;
+		for (const auto &dirEntry : std::filesystem::directory_iterator(abs_path))
+		{
+			if (dirEntry.path().filename().string().find(input) != std::string::npos)
+			{
+
+				// std::cout << "exist" << std::endl;
+				std::string ans = dirEntry.path().filename().string();
+				std::string ret = "";
+				int tmp = 0;
+
+				while (tmp < input.length() && ans[tmp] == input[tmp])
+				{
+					tmp++;
+				}
+				for (int i = tmp; i < ans.length(); i++)
+				{
+					ret += ans[i];
+				}
+
+				res.insert(ret);
+				// std::cout << " " << std::flush;  // Force flush
+				// std::cout << std::endl;
+				// return true;
+			}
+		}
+	}
+    if(res.size() > 1) std::cout << "\a";
+    std::string str = "";
+    for(auto it: res){
+        if(str != "") str += "  ";
+		str += input;
+        str += it;
+    }
+    return str;
+	// return false;
+
 }
 
 bool handleTabPress(std::string &input)
@@ -236,50 +287,82 @@ bool handleTabPress(std::string &input)
 		std::cout << "t ";
 		return true;
 	}
-	else if (get_external_command(input))
-	{
-		// std::cout << " " << std::endl;
-		// std::fflush;
-		return true;
-	}
+	// else if (get_external_command(input))
+	// {
+	// 	return true;
+	// }
 
 	return false;
 }
 
-void readInputWithTabSupport(std::string &input)
-{
-	enableRawMode();
-	char c;
-	while (true)
-	{
-		c = getchar();
-		if (c == '\n')
-		{
-			std::cout << std::endl;
-			break;
-		}
-		else if (c == '\t')
-		{
-			if (!handleTabPress(input))
+void handleDoubleTab(const std::string &input) {
+    std::string path = std::getenv("PATH");
+    std::istringstream stream(path);
+    std::set<std::string> ret_string;
+
+    // Find matching files
+    while (!stream.eof()) {
+        std::getline(stream, path, ':');
+        for (const auto &dirEntry : std::filesystem::directory_iterator(path)) {
+            std::string filename = dirEntry.path().filename().string();
+            if (filename.find(input) == 0) {
+                ret_string.insert(filename);
+            }
+        }
+    }
+
+    std::cout << "\r$ " << input << "    \n";
+
+    for (const std::string &match : ret_string) {
+        std::cout << match << "  ";
+    }
+    std::cout << std::endl;
+
+    // Redisplay the original input
+    std::cout << "$ " << input;
+    std::cout.flush();
+}
+
+void readInputWithTabSupport(std::string &input) {
+    enableRawMode();
+    char c;
+	int tab_count = 0;
+	std::string originalInput; // Store original input before tab completion
+
+    while (true) {
+        c = getchar();
+        if (c == '\n') {
+            std::cout << std::endl;
+            break;
+        } else if (c == '\t') {
+			tab_count += 1;
+			std::string suggestion = autocomplete(input);
+			if(handleTabPress(input)) continue;
+            if (!suggestion.empty() && suggestion.find(" ") == std::string::npos) 
 			{
-				std::cout << "\a";
-			}
-		}
-		else if (c == 127)
-		{
-			if (!input.empty())
+                std::cout << suggestion.substr(input.length()) << " "; // Show completion
+                input = suggestion + " ";
+            }
+            else if(!suggestion.empty() && tab_count == 2)
 			{
-				input.pop_back();
-				std::cout << "\b \b";
-			}
-		}
-		else
-		{
-			input += c;
-			std::cout << c;
-		}
-	}
-	disableRawMode();
+                std::cout << std::endl << suggestion << "\n$ " << input;
+            }
+            else
+			{
+                std::cout << "\a";
+            }
+        } else if (c == 127) {
+            if (!input.empty()) {
+                input.pop_back();
+                std::cout << "\b \b";
+            }
+        } else {
+            tab_count = 0;
+            input += c;
+            std::cout << c;
+        }
+    }
+    disableRawMode();
 }
 
 int main()
