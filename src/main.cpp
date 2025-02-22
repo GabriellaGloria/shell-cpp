@@ -10,7 +10,8 @@ enum validCommands
 	echo,
 	cd,
 	exit_0, // can't use exit since its defined in stdlib
-	invalid
+	invalid,
+	pwd
 };
 
 validCommands string_to_command(std::string command)
@@ -25,6 +26,8 @@ validCommands string_to_command(std::string command)
 		return validCommands::exit_0;
 	if (command == "type")
 		return validCommands::type;
+	if (command == "pwd")
+		return validCommands::pwd;
 
 	return invalid;
 }
@@ -155,6 +158,10 @@ int main()
 		else if (current == echo)
 		{
 			to_echo(input);
+		}
+		else if(current == pwd)
+		{
+			do_command("pwd");
 		}
 		else if (!command_path.empty())
 		{
