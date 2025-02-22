@@ -133,7 +133,11 @@ void do_command(std::string input)
 
 void do_cd(std::string input){
 	input = input.substr(input.find(" ") + 1);
-	int res = chdir(input.c_str());
+	// if(input == "~"){
+	// 	std::string path_env = std::getenv("HOME");
+	// 	return;
+	// }
+	int res = chdir(input == "~" ? std::getenv("HOME") : input.c_str());
 	if(res < 0){
 		std::cout << "cd: " << input.c_str() << ": No such file or directory" << std::endl;
 	}
