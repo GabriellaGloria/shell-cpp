@@ -109,22 +109,22 @@ void print_signature()
 void do_command(std::string input)
 {
     system(input.c_str());
-	int counter = 0;
-	while (!input.empty())
-	{
-		size_t pos = input.find(" ");
-		std::string arg;
-		if (pos == std::string::npos) {
-			arg = input;
-			input.clear();
-		} else {
-			arg = input.substr(0, pos);
-			input = input.substr(pos + 1);
-		}
-		print_arguments(counter, arg);
-		counter += 1;
-	}
-	print_signature();
+	// int counter = 0;
+	// while (!input.empty())
+	// {
+	// 	size_t pos = input.find(" ");
+	// 	std::string arg;
+	// 	if (pos == std::string::npos) {
+	// 		arg = input;
+	// 		input.clear();
+	// 	} else {
+	// 		arg = input.substr(0, pos);
+	// 		input = input.substr(pos + 1);
+	// 	}
+	// 	print_arguments(counter, arg);
+	// 	counter += 1;
+	// }
+	// print_signature();
 }
 
 int main()
@@ -159,6 +159,7 @@ int main()
 		else if (!command_path.empty())
 		{
 			do_command(input);
+			// return 0;
 		}
 		else
 		{
