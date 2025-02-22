@@ -3,7 +3,9 @@
 #include <sstream>
 #include <filesystem>
 #include <stdlib.h>
-#include<unistd.h> 
+#include <unistd.h> 
+#include <termios.h>
+#include <fstream>
 
 enum validCommands
 {
@@ -145,24 +147,7 @@ void print_signature()
 int do_command(std::string input)
 {
 	int ret = system(input.c_str());
-	// std::cout << "return value sys " << ret << std::endl;
 	return ret;
-	// int counter = 0;
-	// while (!input.empty())
-	// {
-	// 	size_t pos = input.find(" ");
-	// 	std::string arg;
-	// 	if (pos == std::string::npos) {
-	// 		arg = input;
-	// 		input.clear();
-	// 	} else {
-	// 		arg = input.substr(0, pos);
-	// 		input = input.substr(pos + 1);
-	// 	}
-	// 	print_arguments(counter, arg);
-	// 	counter += 1;
-	// }
-	// print_signature();
 }
 
 void do_cd(std::string input){
@@ -172,6 +157,55 @@ void do_cd(std::string input){
 		std::cout << "cd: " << input.c_str() << ": No such file or directory" << std::endl;
 	}
 }
+
+void enableRawMode() {
+  termios term;
+  tcgetattr(STDIN_FILENO, &term);
+  term.c_lflag &= ~(ICANON | ECHO);
+  tcsetattr(STDIN_FILENO, TCSANOW, &term);
+}
+
+void disableRawMode() {
+  termios term;
+  tcgetattr(STDIN_FILENO, &term);
+  term.c_lflag |= (ICANON | ECHO);
+  tcsetattr(STDIN_FILENO, TCSANOW, &term);
+}
+
+void handleTabPress(std::string& input) {
+  if(input == "ech") {
+    input = "echo ";
+    std::cout << "o ";
+  }
+  else if(input == "exi") {
+    input = "exit ";
+    std::cout << "t ";
+  }
+}
+
+void readInputWithTabSupport(std::string& input) {
+  enableRawMode();
+  char c;
+  while (true) {
+    c = getchar();
+    if (c == '\n') {
+      std::cout << std::endl;
+      break;
+    } else if (c == '\t') {
+      handleTabPress(input);
+    } else if (c == 127) {
+      if (!input.empty()) {
+        input.pop_back();
+        std::cout << "\b \b";
+      }
+    } else {
+      input += c;
+      std::cout << c;
+    }
+  }
+  disableRawMode();
+}
+
 
 int main()
 {
@@ -184,13 +218,14 @@ int main()
 		// REPL
 		std::cout << "$ ";
 		std::string input;
-		std::getline(std::cin, input);
+    	readInputWithTabSupport(input);
 		validCommands current = string_to_command(input);
 
 		std::string command = input.substr(0, input.find(" "));
-		// std::cout << "command " << command << std::endl;
 		std::string command_path = get_path(command);
-		// std::cout << "command_path " << command_path << std::endl;
+
+		std::cout << "echo " << std::endl;
+
 		if(command_path.empty() && (input[0] == '\'' || input[0] == '\"')){
 			// try remove the quote to get renamed executable
 			char delimiter = input[0];
@@ -227,7 +262,6 @@ int main()
 		else if (!command_path.empty() || current == cat_quote)
 		{
 			do_command(input);
-			// return 0;
 		} 
 		else 
 		{
