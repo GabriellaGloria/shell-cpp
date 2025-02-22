@@ -226,10 +226,11 @@ bool get_external_command(std::string &input)
 	return false;
 }
 
-std::string autocomplete(std::string& input){
+std::pair<std::string, std::string> autocomplete(std::string& input){
 	std::string path = std::getenv("PATH");
 	std::istringstream stream(path);
 	std::set<std::string> res;
+	std::string longest_common = "";
 
 	while (!stream.eof())
 	{
@@ -253,7 +254,19 @@ std::string autocomplete(std::string& input){
 				{
 					ret += ans[i];
 				}
-
+				if(res.size() == 0){
+					longest_common = ret;
+				} else {
+					std::string tmp = "";
+					for(int i=0; i<longest_common.length(); i++){
+						if(longest_common[i] == ret[i]){
+							tmp += longest_common[i];
+						} else {
+							break;
+						}
+					}
+					longest_common = tmp;
+				}
 				res.insert(ret);
 				// std::cout << " " << std::flush;  // Force flush
 				// std::cout << std::endl;
@@ -268,8 +281,8 @@ std::string autocomplete(std::string& input){
 		str += input;
         str += it;
     }
-    return str;
-	// return false;
+
+    return std::make_pair(longest_common, str);
 
 }
 
@@ -336,16 +349,25 @@ void readInputWithTabSupport(std::string &input) {
             break;
         } else if (c == '\t') {
 			tab_count += 1;
-			std::string suggestion = autocomplete(input);
+			std::pair<std::string, std::string> suggestion = autocomplete(input);
+			// std::string suggestion = autocomplete(input).second;
+			// std::string common = 
+			// std::cerr << "fi " << suggestion.first << " se " << suggestion.second << std::endl;
 			if(handleTabPress(input)) continue;
-            if (!suggestion.empty() && suggestion.find(" ") == std::string::npos) 
+            if (!suggestion.first.empty())// || suggestion.second.find(" ") == std::string::npos) 
 			{
-                std::cout << suggestion.substr(input.length()) << " "; // Show completion
-                input = suggestion + " ";
+				// std::cout << "first";
+				std::cout << suggestion.first;
+				if(suggestion.second.find(" ") == std::string::npos) {
+					std::cout << " ";
+				}
+                // std::cout << suggestion.second.substr(input.length()) << " "; // Show completion
+                input += suggestion.first;
             }
-            else if(!suggestion.empty() && tab_count == 2)
+            else if(!suggestion.second.empty() && tab_count == 2)
 			{
-                std::cout << std::endl << suggestion << "\n$ " << input;
+				// std::cout << "second";
+                std::cout << std::endl << suggestion.second << "\n$ " << input;
             }
             else
 			{
