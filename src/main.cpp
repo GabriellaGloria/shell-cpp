@@ -63,7 +63,36 @@ std::string trim(std::string str, int start, int ends)
 
 void to_echo(std::string input)
 {
-	std::cout << trim(input, 5, input.length() - 1) << std::endl;
+	char delimiter = '\'';
+	int delimiter_count = 0;
+
+	for(char i : input){
+		if(i == delimiter) delimiter_count += 1;
+	}
+
+	if(delimiter_count < 2) std::cout << trim(input, 5, input.length() - 1) << std::endl;
+	else {
+
+		int start = -1, end = -1;
+		input = trim(input, 5, input.length() - 1);
+		for(int i=0; i<input.size(); i++){
+			if(input[i] == delimiter && start == -1){
+				start = i;
+			} else if(input[i] == delimiter && end == -1){
+				end = i;
+			}
+			if(start != -1 && end != -1){
+				std::string cur = "";
+				for(int j=start+1; j<end; j++){
+					cur += input[j];
+				}
+				std::cout << cur << " ";
+				start = end = -1;
+			}
+		}
+		std::cout << std::endl;
+	}
+
 }
 
 void to_type(std::string input)
@@ -133,10 +162,6 @@ void do_command(std::string input)
 
 void do_cd(std::string input){
 	input = input.substr(input.find(" ") + 1);
-	// if(input == "~"){
-	// 	std::string path_env = std::getenv("HOME");
-	// 	return;
-	// }
 	int res = chdir(input == "~" ? std::getenv("HOME") : input.c_str());
 	if(res < 0){
 		std::cout << "cd: " << input.c_str() << ": No such file or directory" << std::endl;
@@ -169,10 +194,6 @@ int main()
 		else if (current == exit_0)
 		{
 			return 0;
-		}
-		else if (current == echo)
-		{
-			to_echo(input);
 		}
 		else if(current == pwd)
 		{
