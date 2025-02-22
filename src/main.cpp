@@ -201,6 +201,7 @@ bool get_external_command(std::string &input)
 
 				// std::cout << "exist" << std::endl;
 				std::string ans = dirEntry.path().filename().string();
+				ans += " ";
 				std::string ret = "";
 				int tmp = 0;
 
@@ -211,7 +212,9 @@ bool get_external_command(std::string &input)
 					ret += ans[i];
 				}
 
-				std::cout << ret << std::endl;
+				std::cout << ret;
+				// std::cout << " " << std::flush;  // Force flush
+				std::cout << std::endl;
 				return true;
 			}
 		}
@@ -235,7 +238,8 @@ bool handleTabPress(std::string &input)
 	}
 	else if (get_external_command(input))
 	{
-		std::cout << " " << std::endl;
+		// std::cout << " " << std::endl;
+		// std::fflush;
 		return true;
 	}
 
