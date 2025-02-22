@@ -150,11 +150,6 @@ void print_arguments(int counter, std::string input)
 	}
 }
 
-void print_signature()
-{
-	std::cout << "Program Signature: " << 3721638121 << std::endl;
-}
-
 int do_command(std::string input)
 {
 	int ret = system(input.c_str());
@@ -200,8 +195,6 @@ bool get_external_command(std::string &input)
 		{
 			if (dirEntry.path().filename().string().find(input) != std::string::npos)
 			{
-
-				// std::cout << "exist" << std::endl;
 				std::string ans = dirEntry.path().filename().string();
 				ans += " ";
 				std::string ret = "";
@@ -215,9 +208,7 @@ bool get_external_command(std::string &input)
 				{
 					ret += ans[i];
 				}
-
 				std::cout << ret;
-				// std::cout << " " << std::flush;  // Force flush
 				std::cout << std::endl;
 				return true;
 			}
@@ -226,7 +217,8 @@ bool get_external_command(std::string &input)
 	return false;
 }
 
-std::pair<std::string, std::string> autocomplete(std::string& input){
+std::pair<std::string, std::string> autocomplete(std::string &input)
+{
 	std::string path = std::getenv("PATH");
 	std::istringstream stream(path);
 	std::set<std::string> res;
@@ -240,8 +232,6 @@ std::pair<std::string, std::string> autocomplete(std::string& input){
 		{
 			if (dirEntry.path().filename().string().find(input) != std::string::npos)
 			{
-
-				// std::cout << "exist" << std::endl;
 				std::string ans = dirEntry.path().filename().string();
 				std::string ret = "";
 				int tmp = 0;
@@ -254,36 +244,48 @@ std::pair<std::string, std::string> autocomplete(std::string& input){
 				{
 					ret += ans[i];
 				}
-				if(res.size() == 0){
+				if (res.size() == 0)
+				{
 					longest_common = ret;
-				} else {
+				}
+				else
+				{
 					std::string tmp = "";
-					for(int i=0; i<longest_common.length(); i++){
-						if(longest_common[i] == ret[i]){
+					for (int i = 0; i < longest_common.length(); i++)
+					{
+						if (longest_common[i] == ret[i])
+						{
 							tmp += longest_common[i];
-						} else {
+						}
+						else
+						{
 							break;
 						}
 					}
 					longest_common = tmp;
 				}
 				res.insert(ret);
-				// std::cout << " " << std::flush;  // Force flush
-				// std::cout << std::endl;
-				// return true;
 			}
 		}
 	}
-    if(res.size() > 1) std::cout << "\a";
-    std::string str = "";
-    for(auto it: res){
-        if(str != "") str += "  ";
+
+	if (res.size() > 1)
+	{
+		std::cout << "\a";
+	}
+
+	std::string str = "";
+	for (auto it : res)
+	{
+		if (str != "")
+		{
+			str += "  ";
+		}
 		str += input;
-        str += it;
-    }
+		str += it;
+	}
 
-    return std::make_pair(longest_common, str);
-
+	return std::make_pair(longest_common, str);
 }
 
 bool handleTabPress(std::string &input)
@@ -300,91 +302,97 @@ bool handleTabPress(std::string &input)
 		std::cout << "t ";
 		return true;
 	}
-	// else if (get_external_command(input))
-	// {
-	// 	return true;
-	// }
 
 	return false;
 }
 
-void handleDoubleTab(const std::string &input) {
-    std::string path = std::getenv("PATH");
-    std::istringstream stream(path);
-    std::set<std::string> ret_string;
+void handleDoubleTab(const std::string &input)
+{
+	std::string path = std::getenv("PATH");
+	std::istringstream stream(path);
+	std::set<std::string> ret_string;
 
-    // Find matching files
-    while (!stream.eof()) {
-        std::getline(stream, path, ':');
-        for (const auto &dirEntry : std::filesystem::directory_iterator(path)) {
-            std::string filename = dirEntry.path().filename().string();
-            if (filename.find(input) == 0) {
-                ret_string.insert(filename);
-            }
-        }
-    }
+	while (!stream.eof())
+	{
+		std::getline(stream, path, ':');
+		for (const auto &dirEntry : std::filesystem::directory_iterator(path))
+		{
+			std::string filename = dirEntry.path().filename().string();
+			if (filename.find(input) == 0)
+			{
+				ret_string.insert(filename);
+			}
+		}
+	}
 
-    std::cout << "\r$ " << input << "    \n";
+	std::cout << "\r$ " << input << "    \n";
 
-    for (const std::string &match : ret_string) {
-        std::cout << match << "  ";
-    }
-    std::cout << std::endl;
+	for (const std::string &match : ret_string)
+	{
+		std::cout << match << "  ";
+	}
+	std::cout << std::endl;
 
-    // Redisplay the original input
-    std::cout << "$ " << input;
-    std::cout.flush();
+	std::cout << "$ " << input;
+	std::cout.flush();
 }
 
-void readInputWithTabSupport(std::string &input) {
-    enableRawMode();
-    char c;
+void readInputWithTabSupport(std::string &input)
+{
+	enableRawMode();
+	char c;
 	int tab_count = 0;
-	std::string originalInput; // Store original input before tab completion
+	std::string originalInput;
 
-    while (true) {
-        c = getchar();
-        if (c == '\n') {
-            std::cout << std::endl;
-            break;
-        } else if (c == '\t') {
+	while (true)
+	{
+		c = getchar();
+		if (c == '\n')
+		{
+			std::cout << std::endl;
+			break;
+		}
+		else if (c == '\t')
+		{
 			tab_count += 1;
 			std::pair<std::string, std::string> suggestion = autocomplete(input);
-			// std::string suggestion = autocomplete(input).second;
-			// std::string common = 
-			// std::cerr << "fi " << suggestion.first << " se " << suggestion.second << std::endl;
-			if(handleTabPress(input)) continue;
-            if (!suggestion.first.empty())// || suggestion.second.find(" ") == std::string::npos) 
+			if (handleTabPress(input))
+				continue;
+			if (!suggestion.first.empty())
 			{
-				// std::cout << "first";
 				std::cout << suggestion.first;
-				if(suggestion.second.find(" ") == std::string::npos) {
+				if (suggestion.second.find(" ") == std::string::npos)
+				{
 					std::cout << " ";
 				}
-                // std::cout << suggestion.second.substr(input.length()) << " "; // Show completion
-                input += suggestion.first;
-            }
-            else if(!suggestion.second.empty() && tab_count == 2)
+				input += suggestion.first;
+			}
+			else if (!suggestion.second.empty() && tab_count == 2)
 			{
-				// std::cout << "second";
-                std::cout << std::endl << suggestion.second << "\n$ " << input;
-            }
-            else
+				std::cout << std::endl
+						  << suggestion.second << "\n$ " << input;
+			}
+			else
 			{
-                std::cout << "\a";
-            }
-        } else if (c == 127) {
-            if (!input.empty()) {
-                input.pop_back();
-                std::cout << "\b \b";
-            }
-        } else {
-            tab_count = 0;
-            input += c;
-            std::cout << c;
-        }
-    }
-    disableRawMode();
+				std::cout << "\a";
+			}
+		}
+		else if (c == 127)
+		{
+			if (!input.empty())
+			{
+				input.pop_back();
+				std::cout << "\b \b";
+			}
+		}
+		else
+		{
+			tab_count = 0;
+			input += c;
+			std::cout << c;
+		}
+	}
+	disableRawMode();
 }
 
 int main()
@@ -404,11 +412,8 @@ int main()
 		std::string command = input.substr(0, input.find(" "));
 		std::string command_path = get_path(command);
 
-		// std::cout << "echo " << std::endl;
-
 		if (command_path.empty() && (input[0] == '\'' || input[0] == '\"'))
 		{
-			// try remove the quote to get renamed executable
 			char delimiter = input[0];
 			command = "";
 			bool valid = false;
@@ -440,7 +445,6 @@ int main()
 		}
 		else if (current == cd)
 		{
-			// do_command(input);
 			do_cd(input);
 		}
 		else if (!command_path.empty() || current == cat_quote)
