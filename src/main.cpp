@@ -3,6 +3,7 @@
 #include <sstream>
 #include <filesystem>
 #include <stdlib.h>
+#include<unistd.h> 
 
 enum validCommands
 {
@@ -11,7 +12,7 @@ enum validCommands
 	cd,
 	exit_0, // can't use exit since its defined in stdlib
 	invalid,
-	pwd
+	pwd,
 };
 
 validCommands string_to_command(std::string command)
@@ -130,6 +131,14 @@ void do_command(std::string input)
 	// print_signature();
 }
 
+void do_cd(std::string input){
+	input = input.substr(input.find(" ") + 1);
+	int res = chdir(input.c_str());
+	if(res < 0){
+		std::cout << "cd: " << input.c_str() << ": No such file or directory" << std::endl;
+	}
+}
+
 int main()
 {
 	// Flush after every std::cout / std:cerr
@@ -145,7 +154,9 @@ int main()
 		validCommands current = string_to_command(input);
 
 		std::string command = input.substr(0, input.find(" "));
+		// std::cout << "command " << command << std::endl;
 		std::string command_path = get_path(command);
+		// std::cout << "command_path " << command_path << std::endl;
 
 		if (current == type)
 		{
@@ -162,6 +173,11 @@ int main()
 		else if(current == pwd)
 		{
 			do_command("pwd");
+		}
+		else if(current == cd)
+		{
+			// do_command(input);
+			do_cd(input);
 		}
 		else if (!command_path.empty())
 		{
