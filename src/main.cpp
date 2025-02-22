@@ -203,27 +203,19 @@ bool get_external_command(std::string &input)
 				std::string ans = dirEntry.path().filename().string();
 				std::string ret = "";
 				int tmp = 0;
+
 				while(tmp < input.length() && ans[tmp] == input[tmp]){
 					tmp++;
 				}
 				for(int i=tmp; i<ans.length(); i++){
 					ret += ans[i];
 				}
-				std::cout << ret << " " << std::endl;
+
+				std::cout << ret << std::endl;
 				return true;
 			}
 		}
 	}
-
-	// for (const auto &dirEntry : std::filesystem::directory_iterator("."))
-	// {
-	// 	if (dirEntry.path().filename().string().find(input) != std::string::npos)
-	// 	{
-	// 		std::cout << "exist" << std::endl;
-	// 		std::cout << dirEntry.path().filename().string() << std::endl;
-	// 		return true;
-	// 	}
-	// }
 	return false;
 }
 
@@ -243,6 +235,7 @@ bool handleTabPress(std::string &input)
 	}
 	else if (get_external_command(input))
 	{
+		std::cout << " " << std::endl;
 		return true;
 	}
 
