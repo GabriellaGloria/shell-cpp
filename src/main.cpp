@@ -172,15 +172,18 @@ void disableRawMode() {
   tcsetattr(STDIN_FILENO, TCSANOW, &term);
 }
 
-void handleTabPress(std::string& input) {
+bool handleTabPress(std::string& input) {
   if(input == "ech") {
     input = "echo ";
     std::cout << "o ";
+	return true;
   }
   else if(input == "exi") {
     input = "exit ";
     std::cout << "t ";
+	return true;
   }
+  return false;
 }
 
 void readInputWithTabSupport(std::string& input) {
@@ -192,7 +195,9 @@ void readInputWithTabSupport(std::string& input) {
       std::cout << std::endl;
       break;
     } else if (c == '\t') {
-      handleTabPress(input);
+      if(!handleTabPress(input)){
+		std::cout << "\a";
+	  } 
     } else if (c == 127) {
       if (!input.empty()) {
         input.pop_back();
