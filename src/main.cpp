@@ -110,7 +110,6 @@ void do_command(std::string input)
 {
     system(input.c_str());
 	int counter = 0;
-	std::cout << input << std::endl;
 	while (!input.empty())
 	{
 		size_t pos = input.find(" ");
