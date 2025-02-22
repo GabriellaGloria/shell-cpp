@@ -13,6 +13,7 @@ enum validCommands
 	exit_0, // can't use exit since its defined in stdlib
 	invalid,
 	pwd,
+	cat_quote
 };
 
 validCommands string_to_command(std::string command)
@@ -29,6 +30,8 @@ validCommands string_to_command(std::string command)
 		return validCommands::type;
 	if (command == "pwd")
 		return validCommands::pwd;
+	if (command == "'cat'")
+		return validCommands::cat_quote;
 
 	return invalid;
 }
@@ -139,9 +142,11 @@ void print_signature()
 	std::cout << "Program Signature: " << 3721638121 << std::endl;
 }
 
-void do_command(std::string input)
+int do_command(std::string input)
 {
-    system(input.c_str());
+	int ret = system(input.c_str());
+	// std::cout << "return value sys " << ret << std::endl;
+	return ret;
 	// int counter = 0;
 	// while (!input.empty())
 	// {
@@ -186,7 +191,22 @@ int main()
 		// std::cout << "command " << command << std::endl;
 		std::string command_path = get_path(command);
 		// std::cout << "command_path " << command_path << std::endl;
-
+		if(command_path.empty() && (input[0] == '\'' || input[0] == '\"')){
+			// try remove the quote to get renamed executable
+			char delimiter = input[0];
+			command = "";
+			bool valid = false;
+			for(int i=1; i<input.length(); i++){
+				if(input[i] == delimiter){
+					valid = true;
+					break;
+				}
+				command += input[i];
+			}
+			if(valid){
+				command_path = get_path(command);
+			}
+		}
 		if (current == type)
 		{
 			to_type(input);
@@ -204,12 +224,12 @@ int main()
 			// do_command(input);
 			do_cd(input);
 		}
-		else if (!command_path.empty())
+		else if (!command_path.empty() || current == cat_quote)
 		{
 			do_command(input);
 			// return 0;
-		}
-		else
+		} 
+		else 
 		{
 			not_found(input);
 		}
