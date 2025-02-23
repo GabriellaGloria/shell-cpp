@@ -21,6 +21,10 @@ std::pair<std::string, std::string> autocomplete(std::string &input)
     {
         std::getline(stream, path, ':');
         std::string abs_path = path;
+        if (!std::filesystem::exists(abs_path))
+        {
+            continue; // Skip non-existent directories
+        }
         for (const auto &dirEntry : std::filesystem::directory_iterator(abs_path))
         {
             if (dirEntry.path().filename().string().find(input) != std::string::npos)
